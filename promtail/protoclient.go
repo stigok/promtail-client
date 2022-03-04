@@ -1,19 +1,18 @@
 package promtail
 
 import (
-	"fmt"
-	"github.com/golang/protobuf/proto"
-	"github.com/golang/protobuf/ptypes/timestamp"
-	"github.com/golang/snappy"
-	"github.com/afiskon/promtail-client/logproto"
 	"log"
 	"sync"
 	"time"
+
+	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/ptypes/timestamp"
+	"github.com/golang/snappy"
+	"github.com/martensson/promtail-client/logproto"
 )
 
 type protoLogEntry struct {
 	entry *logproto.Entry
-	level LogLevel
 }
 
 type clientProto struct {
@@ -38,35 +37,16 @@ func NewClientProto(conf ClientConfig) (Client, error) {
 	return &client, nil
 }
 
-func (c *clientProto) Debugf(format string, args ...interface{}) {
-	c.log(format, DEBUG, "Debug: ", args...)
-}
-
-func (c *clientProto) Infof(format string, args ...interface{}) {
-	c.log(format, INFO, "Info: ", args...)
-}
-
-func (c *clientProto) Warnf(format string, args ...interface{}) {
-	c.log(format, WARN, "Warn: ", args...)
-}
-
-func (c *clientProto) Errorf(format string, args ...interface{}) {
-	c.log(format, ERROR, "Error: ", args...)
-}
-
-func (c *clientProto) log(format string, level LogLevel, prefix string, args ...interface{}) {
-	if (level >= c.config.SendLevel) || (level >= c.config.PrintLevel) {
-		now := time.Now().UnixNano()
-		c.entries <- protoLogEntry{
-			entry: &logproto.Entry{
-				Timestamp: &timestamp.Timestamp{
-					Seconds: now / int64(time.Second),
-					Nanos:   int32(now % int64(time.Second)),
-				},
-				Line: fmt.Sprintf(prefix+format, args...),
+func (c *clientProto) Log(message string) {
+	now := time.Now().UnixNano()
+	c.entries <- protoLogEntry{
+		entry: &logproto.Entry{
+			Timestamp: &timestamp.Timestamp{
+				Seconds: now / int64(time.Second),
+				Nanos:   int32(now % int64(time.Second)),
 			},
-			level: level,
-		}
+			Line: message,
+		},
 	}
 }
 
@@ -93,19 +73,14 @@ func (c *clientProto) run() {
 		case <-c.quit:
 			return
 		case entry := <-c.entries:
-			if entry.level >= c.config.PrintLevel {
-				log.Print(entry.entry.Line)
-			}
-
-			if entry.level >= c.config.SendLevel {
-				batch = append(batch, entry.entry)
-				batchSize++
-				if batchSize >= c.config.BatchEntriesNumber {
-					c.send(batch)
-					batch = []*logproto.Entry{}
-					batchSize = 0
-					maxWait.Reset(c.config.BatchWait)
-				}
+			log.Print(entry.entry.Line)
+			batch = append(batch, entry.entry)
+			batchSize++
+			if batchSize >= c.config.BatchEntriesNumber {
+				c.send(batch)
+				batch = []*logproto.Entry{}
+				batchSize = 0
+				maxWait.Reset(c.config.BatchWait)
 			}
 		case <-maxWait.C:
 			if batchSize > 0 {

@@ -2,16 +2,14 @@ package promtail
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"sync"
 	"time"
 )
 
 type jsonLogEntry struct {
-	Ts    time.Time `json:"ts"`
-	Line  string    `json:"line"`
-	level LogLevel // not used in JSON
+	Ts   time.Time `json:"ts"`
+	Line string    `json:"line"`
 }
 
 type promtailStream struct {
@@ -45,29 +43,10 @@ func NewClientJson(conf ClientConfig) (Client, error) {
 	return &client, nil
 }
 
-func (c *clientJson) Debugf(format string, args ...interface{}) {
-	c.log(format, DEBUG, "Debug: ", args...)
-}
-
-func (c *clientJson) Infof(format string, args ...interface{}) {
-	c.log(format, INFO, "Info: ", args...)
-}
-
-func (c *clientJson) Warnf(format string, args ...interface{}) {
-	c.log(format, WARN, "Warn: ", args...)
-}
-
-func (c *clientJson) Errorf(format string, args ...interface{}) {
-	c.log(format, ERROR, "Error: ", args...)
-}
-
-func (c *clientJson) log(format string, level LogLevel, prefix string, args ...interface{}) {
-	if (level >= c.config.SendLevel) || (level >= c.config.PrintLevel) {
-		c.entries <- &jsonLogEntry{
-			Ts:    time.Now(),
-			Line:  fmt.Sprintf(prefix+format, args...),
-			level: level,
-		}
+func (c *clientJson) Log(message string) {
+	c.entries <- &jsonLogEntry{
+		Ts:   time.Now(),
+		Line: message,
 	}
 }
 
@@ -94,19 +73,14 @@ func (c *clientJson) run() {
 		case <-c.quit:
 			return
 		case entry := <-c.entries:
-			if entry.level >= c.config.PrintLevel {
-				log.Print(entry.Line)
-			}
-
-			if entry.level >= c.config.SendLevel {
-				batch = append(batch, entry)
-				batchSize++
-				if batchSize >= c.config.BatchEntriesNumber {
-					c.send(batch)
-					batch = []*jsonLogEntry{}
-					batchSize = 0
-					maxWait.Reset(c.config.BatchWait)
-				}
+			log.Print(entry.Line)
+			batch = append(batch, entry)
+			batchSize++
+			if batchSize >= c.config.BatchEntriesNumber {
+				c.send(batch)
+				batch = []*jsonLogEntry{}
+				batchSize = 0
+				maxWait.Reset(c.config.BatchWait)
 			}
 		case <-maxWait.C:
 			if batchSize > 0 {
