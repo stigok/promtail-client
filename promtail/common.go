@@ -19,6 +19,7 @@ type ClientConfig struct {
 }
 
 type Client interface {
+	Log(message string)
 	Shutdown()
 }
 
