@@ -73,7 +73,6 @@ func (c *clientProto) run() {
 		case <-c.quit:
 			return
 		case entry := <-c.entries:
-			log.Print(entry.entry.Line)
 			batch = append(batch, entry.entry)
 			batchSize++
 			if batchSize >= c.config.BatchEntriesNumber {
