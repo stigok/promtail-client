@@ -44,8 +44,12 @@ func NewClientJson(conf ClientConfig) (Client, error) {
 }
 
 func (c *clientJson) Log(message string) {
+	c.LogWithTime(message, time.Now())
+}
+
+func (c *clientJson) LogWithTime(message string, t time.Time) {
 	c.entries <- &jsonLogEntry{
-		Ts:   time.Now(),
+		Ts:   t,
 		Line: message,
 	}
 }

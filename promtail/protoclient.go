@@ -38,12 +38,16 @@ func NewClientProto(conf ClientConfig) (Client, error) {
 }
 
 func (c *clientProto) Log(message string) {
-	now := time.Now().UnixNano()
+	c.LogWithTime(message, time.Now())
+}
+
+func (c *clientProto) LogWithTime(message string, t time.Time) {
+	ns := t.UnixNano()
 	c.entries <- protoLogEntry{
 		entry: &logproto.Entry{
 			Timestamp: &timestamp.Timestamp{
-				Seconds: now / int64(time.Second),
-				Nanos:   int32(now % int64(time.Second)),
+				Seconds: ns / int64(time.Second),
+				Nanos:   int32(ns % int64(time.Second)),
 			},
 			Line: message,
 		},
