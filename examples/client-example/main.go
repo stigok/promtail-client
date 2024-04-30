@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/martensson/promtail-client/promtail"
+	"github.com/stigok/promtail-client/promtail"
 )
 
 func displayUsage() {

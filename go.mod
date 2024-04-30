@@ -1,4 +1,4 @@
-module github.com/martensson/promtail-client
+module github.com/stigok/promtail-client
 
 go 1.18
 
