@@ -20,6 +20,7 @@ type ClientConfig struct {
 
 type Client interface {
 	Log(message string)
+	LogWithTime(message string, t time.Time)
 	Shutdown()
 }
 
