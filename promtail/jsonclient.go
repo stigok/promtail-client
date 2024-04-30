@@ -29,7 +29,7 @@ type clientJson struct {
 	client    httpClient
 }
 
-func NewClientJson(conf ClientConfig) (Client, error) {
+func NewClientJson(conf ClientConfig) Client {
 	client := clientJson{
 		config:  &conf,
 		quit:    make(chan struct{}),
@@ -40,7 +40,7 @@ func NewClientJson(conf ClientConfig) (Client, error) {
 	client.waitGroup.Add(1)
 	go client.run()
 
-	return &client, nil
+	return &client
 }
 
 func (c *clientJson) Log(message string) {

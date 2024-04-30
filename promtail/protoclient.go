@@ -23,7 +23,7 @@ type clientProto struct {
 	client    httpClient
 }
 
-func NewClientProto(conf ClientConfig) (Client, error) {
+func NewClientProto(conf ClientConfig) Client {
 	client := clientProto{
 		config:  &conf,
 		quit:    make(chan struct{}),
@@ -34,7 +34,7 @@ func NewClientProto(conf ClientConfig) (Client, error) {
 	client.waitGroup.Add(1)
 	go client.run()
 
-	return &client, nil
+	return &client
 }
 
 func (c *clientProto) Log(message string) {
